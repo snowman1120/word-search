@@ -20,16 +20,21 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
-    const totalCount = await Word.find({}).countDocuments();
-    let numbers = [];
-    for(let i = 0; i < WORD_COUNT; i ++) {
-        const number = Math.round(Math.random() * (totalCount - 1));
-        numbers.push(number);
+    try {
+        const totalCount = await Word.find({}).countDocuments();
+        let numbers = [];
+        for(let i = 0; i < WORD_COUNT; i ++) {
+            const number = Math.round(Math.random() * (totalCount - 1));
+            numbers.push(number);
+        }
+    
+        words = await Word.find({number: numbers});
+        words = words.map(word => word.word.toUpperCase());
+        res.json(words);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({error: 'Server Error'});
     }
-
-    words = await Word.find({number: numbers});
-    words = words.map(word => word.word.toUpperCase());
-    res.json(words);
 });
 
 router.get('/test', async (req, res) => {

@@ -1,7 +1,8 @@
-import {useState, useEffect} from 'react';
-import {Container, Button, Alert} from 'react-bootstrap';
-import {useStateContext} from 'contexts/ContextProvider';
-import {getWords} from 'actions/play';
+import { useState, useEffect } from 'react';
+import { Container, Button } from 'react-bootstrap';
+import { useStateContext } from 'contexts/ContextProvider';
+import CAlert from 'layouts/CAlert';
+import { getWords } from 'actions/play';
 
 import $ from 'jquery';
 
@@ -93,9 +94,7 @@ const putWordsIntoLetters = (words) => {
 }
 
 const Main = () => {
-    const { isConnected, words, setWords } = useStateContext();
-
-    const [show, setShow] = useState(false);
+    const { isConnected, words, setWords, setMessage, isLoggedin } = useStateContext();
 
     let fromSpot = null;
     const setFromSpot = (spot) => fromSpot = spot;
@@ -186,7 +185,7 @@ const Main = () => {
             window.addEventListener("keydown",function (e) {
                 if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70) || (e.ctrlKey && e.keyCode === 71)) { 
                     e.preventDefault();
-                    setShow(true);
+                    setMessage("Please don't press Ctrl + F. Disable the function.");
                 }
             });
                     
@@ -215,7 +214,7 @@ const Main = () => {
             resizeScreen();
                     
             window.addEventListener('mousedown', (e) => {
-                setShow(false);
+                setMessage(null);
                 const fitSpot = findFitSpot({x: e.clientX, y: e.clientY});
                 if(fitSpot) setFromSpot(fitSpot);
 
@@ -236,7 +235,7 @@ const Main = () => {
                 drawLine(ctx, [downPos.x, downPos.y], [e.clientX + window.scrollX, e.clientY + window.scrollY], color, lineWidth);
             });
             window.addEventListener('mouseup', (e) => {
-                setShow(false);
+                setMessage(null);
                 if(!downPos || !fromSpot || !fromSpot.pos) return;
                 const toSpot = findFitSpot({x: e.clientX, y: e.clientY});
                 if(!toSpot || 
@@ -289,17 +288,11 @@ const Main = () => {
 
     return (
         <div className='main'>
-            <Alert variant="danger" onClose={() => setShow(false)} dismissible show={show}>
-                <Alert.Heading>Oh snap!</Alert.Heading>
-                <p>
-                Please don't press Ctrl + F. Disable the function.
-                </p>
-            </Alert>
-
+            <CAlert />
             <canvas id="canvas"></canvas>
             <div className='text-center'>
                 {
-                    isConnected ? (<Button variant="primary" className='btn-start' onClick={onStart}>START</Button>) : 
+                    isConnected && isLoggedin ? (<Button variant="primary" className='btn-start' onClick={onStart}>START</Button>) : 
                     <Button variant="primary" className='btn-start' disabled onClick={onStart}>START</Button>
                 }
             </div>

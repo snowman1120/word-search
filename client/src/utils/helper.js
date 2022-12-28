@@ -31,7 +31,6 @@ export const mile2km = (mile) => {
     return 1.609344 * mile;
 }
 
-
 export function getPosElement(el, mode = "default") {
     if(!el) return null;
     const rect = el.getBoundingClientRect();
@@ -73,3 +72,18 @@ export function reverseString(str) {
     }
     return newString; 
 }
+
+export const detectCurrentProvider = () => {
+    let provider;
+    if (window.ethereum) {
+      provider = window.ethereum;
+    } else if (window.web3) {
+      // eslint-disable-next-line
+      provider = window.web3.currentProvider;
+    } else {
+      console.log(
+        'Non-Ethereum browser detected. You should consider trying MetaMask!'
+      );
+    }
+    return provider;
+};

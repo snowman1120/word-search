@@ -1,57 +1,49 @@
-import {useState, useEffect} from 'react';
+import {useEffect} from 'react';
 import { Container, Nav, Navbar } from 'react-bootstrap';
 import {useStateContext} from 'contexts/ContextProvider';
 
 import Web3 from 'web3';
 
+import Login from './Login';
+import { detectCurrentProvider } from 'utils/helper';
+
+import setAuthToken from 'utils/setAuthToken';
+import { logout } from 'actions/user';
+
 const CNavbar = () => {
-    const { isConnected, setIsConnected } = useStateContext();
-    const [userInfo, setUserInfo] = useState({});
+    const { setIsConnected, setIsLoggedin } = useStateContext();
 
     useEffect(() => {
-      const checkConnectedWallet = () => {
-        const userData = JSON.parse(localStorage.getItem('userAccount'));
-        if (userData != null) {
-          setUserInfo(userData);
-          setIsConnected(true);
-        }
-      }
-      checkConnectedWallet();
-      
-      window.ethereum.on('accountsChanged', (e) => {
-        // Do something
-        if(e.length > 0) {
-          const userData = JSON.parse(localStorage.getItem('userAccount'));
-          if (userData != null) {
-            setUserInfo(userData);
-            setIsConnected(true);
-          } else {
-            onConnect();
-          }
-        } else {
-          localStorage.removeItem('userAccount');
-          setUserInfo(null);
-          setIsConnected(false);
-        }
+      checkConnection();
+      window.ethereum.on('accountsChanged', (accounts) => {
+        handleAccountsChanged(accounts);
       });
     }, []);
 
-    const detectCurrentProvider = () => {
-        let provider;
-        if (window.ethereum) {
-          provider = window.ethereum;
-        } else if (window.web3) {
-          // eslint-disable-next-line
-          provider = window.web3.currentProvider;
+    function handleAccountsChanged(accounts) {
+      // Do something
+      if(accounts.length > 0) {
+        const userData = JSON.parse(localStorage.getItem('userAccount'));
+        if (userData != null) {
+          setIsConnected(true);
         } else {
-          console.log(
-            'Non-Ethereum browser detected. You should consider trying MetaMask!'
-          );
+          handleConnect();
         }
-        return provider;
-    };
+      } else {
+        localStorage.removeItem('userAccount');
+        setIsConnected(false);
+        setIsLoggedin(false);
+        logout();
+      }
+    }
 
-    const onConnect = async () => {
+    function checkConnection() {
+      const currentProvider = detectCurrentProvider();
+      currentProvider.request({ method: 'eth_accounts' }).then(handleAccountsChanged).catch(console.error);
+    }
+    
+
+    const handleConnect = async () => {
         try {
           const currentProvider = detectCurrentProvider();
           if (currentProvider) {
@@ -86,9 +78,14 @@ const CNavbar = () => {
           connectionid: chainId,
         };
         window.localStorage.setItem('userAccount', JSON.stringify(userAccount)); //user persisted data
-        const userData = JSON.parse(localStorage.getItem('userAccount'));
-        setUserInfo(userData);
         setIsConnected(true);
+    };
+
+    const handleLoggedIn = (token) => {
+      if(token) {
+        setAuthToken(token);
+        setIsLoggedin(true);
+      }
     };
 
     return (
@@ -99,14 +96,7 @@ const CNavbar = () => {
             <Navbar.Collapse id="responsive-navbar-nav">
                 <Nav className="me-auto"></Nav>
                 <Nav>
-                    {
-                        isConnected ? (
-                          <>
-                            <img src="/assets/img/metamask.svg" alt="" className='metamask-logo' />
-                            <span style={{lineHeight: '36px', marginLeft: '10px'}}>Connected</span>
-                          </>
-                        ) : <Nav.Link href="#" onClick={onConnect}>Connect to metamask</Nav.Link>
-                    }
+                    <Login onConnect={handleConnect} onLoggedIn={handleLoggedIn} />
                 </Nav>
                 </Navbar.Collapse>
         </Container>
