@@ -1,0 +1,4 @@
+{
+    "jwtSecret": "word-search",
+    "mongoURI": "mongodb://localhost:27017/wordsearch"
+}

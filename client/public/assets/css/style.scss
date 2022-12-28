@@ -1,0 +1,61 @@
+.App {
+    min-width: 1200px;
+
+    .metamask-logo {
+        width: 40px;
+        height: auto;
+    }
+}
+.main {
+    margin-top: 50px;
+    canvas {
+        position: absolute;
+        left: 0;
+        top: 0;
+        cursor: pointer;
+        z-index: -999;
+    }
+    .btn-start {
+        width: 200px
+    }
+    .letter-container {
+        width: fit-content;
+        margin: 30px auto;
+        border: 1px solid lightgrey;
+        padding: 20px;
+        border-radius: 10px;
+        
+        .letter-spot {
+            width: 27px;
+            height: 27px;
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+            margin: 1px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: 700;
+            user-select: none;
+            transition: all 0.3s;
+        }
+
+        .letter-spot:focus {
+            background-color: lightgrey;
+        }
+    }
+
+    .word-container {
+        margin: 0 200px 50px 200px;
+        .word {
+            height: 40px;
+            border: 1px solid lightgrey;
+            border-radius: 5px;
+            text-align: center;
+            line-height: 35px;
+            margin: 5px 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+    }
+}
