@@ -207,21 +207,6 @@ const Main = () => {
         drawListLines(); 
     }
 
-    const init = () => {
-        const canv = document.querySelector('#canvas');
-        setCanvas(canv);
-        if (canv && canv.getContext) {
-            const ctx = canv.getContext('2d');
-            setContext(ctx);
-        }
-        resizeScreen();
-        window.addEventListener("keydown", preventSearchFunction);
-        window.addEventListener('resize', resizeScreen, false);
-        window.addEventListener('mousedown', handleMouseDown);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-    }
-
     const preventSearchFunction = (e) => {
         if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70) || (e.ctrlKey && e.keyCode === 71)) { 
             e.preventDefault();
@@ -296,7 +281,18 @@ const Main = () => {
     }, []);
 
     useEffect(() => {
-        init();
+        const canv = document.querySelector('#canvas');
+        setCanvas(canv);
+        if (canv && canv.getContext) {
+            const ctx = canv.getContext('2d');
+            setContext(ctx);
+        }
+        resizeScreen();
+        window.addEventListener("keydown", preventSearchFunction);
+        window.addEventListener('resize', resizeScreen, false);
+        window.addEventListener('mousedown', handleMouseDown);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
     }, [words]);
 
     useEffect(() => {
