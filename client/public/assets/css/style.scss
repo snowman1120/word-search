@@ -8,6 +8,10 @@
 }
 .main {
     margin-top: 50px;
+    .track-time {
+        font-size: 25px;
+        font-weight: bold;
+    }
     canvas {
         position: absolute;
         left: 0;

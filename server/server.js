@@ -25,6 +25,7 @@ app.use(cors({origin: '*'}));
 app.use('/api/users', require('./routes/api/users'));
 app.use('/api/auth', require('./routes/api/auth'));
 app.use('/api/word', require('./routes/api/word'));
+app.use('/api/play', require('./routes/api/play'));
 
 process.env.NODE_ENV = "production";
 

@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { Container, Button } from 'react-bootstrap';
 import { useStateContext } from 'contexts/ContextProvider';
 import CAlert from 'layouts/CAlert';
+import CongrateModal from './CongrateModal';
 import { getWords } from 'actions/play';
 
 import $ from 'jquery';
 
-import {drawLine, getPosElement, reverseString} from 'utils/helper';
+import {drawLineOnCanvas, getPosElement, reverseString, convertSeconds2DHMS} from 'utils/helper';
+
+import { startPlay, endPlay } from 'actions/play';
 
 const alphabets = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 const letters = [];
@@ -103,18 +106,25 @@ const Main = () => {
     let color = 'rgba(0, 0, 0, 0.3)';
     const setColor = (c) => color = c;
     
+    const [canvas, setCanvas] = useState(null);
+    const [context, setContext] = useState(null);
     const [lineList, setLineList] = useState([]);
     const [playing, setPlaying] = useState(false);
+    const [playInfo, setPlayInfo] = useState(null);
+    const [trackTime, setTrackTime] = useState('00 : 00');
+    const [showModal, setShowModal] = useState(false);
     
     function drawListLines() {
-        const canvas = document.querySelector('#canvas');
-        if (canvas && canvas.getContext) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (context) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
             // do your drawing stuff here
-            lineList.forEach(line => drawLine(ctx, 
+            lineList.forEach(line => drawLineOnCanvas(context,
                 [line.from.pos.x, line.from.pos.y], [line.to.pos.x, line.to.pos.y], line.color, lineWidth));
         }
+    }
+
+    function drawLine(startPos, endPos) {
+        drawLineOnCanvas(context, [startPos.x, startPos.y], [endPos.x, endPos.y], color, lineWidth);
     }
 
     const findFitSpot = (p) => {
@@ -162,7 +172,7 @@ const Main = () => {
         return word;
     }
 
-    const setCanvas = () => {
+    const configureCanvas = () => {
         const canvas = document.querySelector('#canvas');
         const letterContainer = $('.letter-container')[0];
         canvas.width = window.innerWidth;
@@ -174,97 +184,108 @@ const Main = () => {
         }
     }
 
+    // resize the canvas to fill browser window dynamically      
+    const resizeScreen = () => {
+        configureCanvas();                        
+        const spotEls = $('.letter-spot');
+        const t_lineList = lineList.map(line => {
+            line.from = {
+                row: parseInt(line.from.row),
+                col: parseInt(line.from.col),
+                pos: line.from.pos
+            };
+            line.to = {
+                row: parseInt(line.to.row),
+                col: parseInt(line.to.col),
+                pos: line.to.pos
+            };
+            line.from.pos = getPosElement(spotEls[line.from.row * colCount + line.from.col], 'center');
+            line.to.pos = getPosElement(spotEls[line.to.row * colCount + line.to.col], 'center');
+            return line;
+        });
+        setLineList(t_lineList);
+        drawListLines(); 
+    }
+
     const init = () => {
-        const canvas = document.querySelector('#canvas');
-        if (canvas && canvas.getContext) {
-            const ctx = canvas.getContext('2d');
-
-            // resize the canvas to fill browser window dynamically
-            window.addEventListener('resize', resizeScreen, false);
-
-            window.addEventListener("keydown",function (e) {
-                if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70) || (e.ctrlKey && e.keyCode === 71)) { 
-                    e.preventDefault();
-                    setMessage("Please don't press Ctrl + F. Disable the function.");
-                }
-            });
-                    
-            function resizeScreen() {
-                setCanvas();                        
-                const spotEls = $('.letter-spot');
-                const t_lineList = lineList.map(line => {
-                    line.from = {
-                        row: parseInt(line.from.row),
-                        col: parseInt(line.from.col),
-                        pos: line.from.pos
-                    };
-                    line.to = {
-                        row: parseInt(line.to.row),
-                        col: parseInt(line.to.col),
-                        pos: line.to.pos
-                    };
-                    line.from.pos = getPosElement(spotEls[line.from.row * colCount + line.from.col], 'center');
-                    line.to.pos = getPosElement(spotEls[line.to.row * colCount + line.to.col], 'center');
-                    return line;
-                });
-                setLineList(t_lineList);
-                drawListLines(); 
-            }
-            
-            resizeScreen();
-                    
-            window.addEventListener('mousedown', (e) => {
-                setMessage(null);
-                const fitSpot = findFitSpot({x: e.clientX, y: e.clientY});
-                if(fitSpot) setFromSpot(fitSpot);
-
-                downPos = {x: e.clientX + window.scrollX, y: e.clientY + window.scrollY};
-
-                let r = 0, g = 0, b = 0;
-                do {
-                    r = Math.random() * 255;
-                    g = Math.random() * 255;
-                    b = Math.random() * 255;
-                } while ((r + g + b) > 600 || (r + g + b) < 60);
-                const c = `rgba(${r}, ${g}, ${b}, 0.8)`;
-                setColor(c);
-            });
-            window.addEventListener('mousemove', (e) => {
-                if(!downPos || !fromSpot) return;
-                drawListLines();
-                drawLine(ctx, [downPos.x, downPos.y], [e.clientX + window.scrollX, e.clientY + window.scrollY], color, lineWidth);
-            });
-            window.addEventListener('mouseup', (e) => {
-                setMessage(null);
-                if(!downPos || !fromSpot || !fromSpot.pos) return;
-                const toSpot = findFitSpot({x: e.clientX, y: e.clientY});
-                if(!toSpot || 
-                    (fromSpot.pos.x === toSpot.pos.x && fromSpot.pos.y === toSpot.pos.y) ||
-                    (fromSpot.row !== toSpot.row && fromSpot.col !== toSpot.col && (Math.abs(fromSpot.pos.x - toSpot.pos.x) !== Math.abs(fromSpot.pos.y - toSpot.pos.y)))
-                ) {
-                    drawListLines();
-                    setFromSpot(null);
-                    return;
-                }
-                downPos = null;
-                
-                const word = findWord({row: fromSpot.row, col: fromSpot.col}, {row: toSpot.row, col: toSpot.col});
-                if(words.findIndex(w => w === word) >= 0 || words.findIndex(w => w === reverseString(word)) >= 0) {
-                    foundWords.push(word);
-                    $(`#word__${word}`).addClass('opacity-0');
-
-                    let t_list = lineList;
-                    t_list.push({
-                        from: fromSpot, 
-                        to: toSpot,
-                        color: color
-                    });
-                    setLineList(t_list);
-                }
-                drawListLines(); 
-                setFromSpot(null);
-            });
+        const canv = document.querySelector('#canvas');
+        setCanvas(canv);
+        if (canv && canv.getContext) {
+            const ctx = canv.getContext('2d');
+            setContext(ctx);
         }
+        resizeScreen();
+        window.addEventListener("keydown", preventSearchFunction);
+        window.addEventListener('resize', resizeScreen, false);
+        window.addEventListener('mousedown', handleMouseDown);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    const preventSearchFunction = (e) => {
+        if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70) || (e.ctrlKey && e.keyCode === 71)) { 
+            e.preventDefault();
+            setMessage("Please don't press Ctrl + F. Disable the function.");
+        }
+    }
+    
+    const handleMouseDown = (e) => {
+        setMessage(null);
+        const fitSpot = findFitSpot({x: e.clientX, y: e.clientY});
+        if(fitSpot) setFromSpot(fitSpot);
+
+        downPos = {x: e.clientX + window.scrollX, y: e.clientY + window.scrollY};
+
+        let r = 0, g = 0, b = 0;
+        do {
+            r = Math.random() * 255;
+            g = Math.random() * 255;
+            b = Math.random() * 255;
+        } while ((r + g + b) > 600 || (r + g + b) < 60);
+        const c = `rgba(${r}, ${g}, ${b}, 0.8)`;
+        setColor(c);
+    }
+
+    const handleMouseMove = (e) => {
+        if(!downPos || !fromSpot) return;
+        drawListLines();
+        drawLine( 
+            {x: downPos.x, y: downPos.y}, 
+            {x: e.clientX + window.scrollX, y: e.clientY + window.scrollY}
+        );
+    }
+
+    const handleMouseUp = (e) => {
+        setMessage(null);
+        if(!downPos || !fromSpot || !fromSpot.pos) return;
+        const toSpot = findFitSpot({x: e.clientX, y: e.clientY});
+        if(!toSpot || 
+            (fromSpot.pos.x === toSpot.pos.x && fromSpot.pos.y === toSpot.pos.y) ||
+            (fromSpot.row !== toSpot.row && fromSpot.col !== toSpot.col && (Math.abs(fromSpot.pos.x - toSpot.pos.x) !== Math.abs(fromSpot.pos.y - toSpot.pos.y)))
+        ) {
+            drawListLines();
+            setFromSpot(null);
+            return;
+        }
+        downPos = null;
+        
+        const word = findWord({row: fromSpot.row, col: fromSpot.col}, {row: toSpot.row, col: toSpot.col});
+        if(words.findIndex(w => w === word) >= 0 || words.findIndex(w => w === reverseString(word)) >= 0) {
+            foundWords.push(word);
+            $(`#word__${word}`).addClass('opacity-0');
+
+            let t_list = lineList;
+            t_list.push({
+                from: fromSpot, 
+                to: toSpot,
+                color: color
+            });
+            setLineList(t_list);
+
+            if(foundWords.length === words.length) handleEnd();
+        }
+        drawListLines(); 
+        setFromSpot(null);
     }
 
     useEffect(() => {
@@ -279,21 +300,47 @@ const Main = () => {
     }, [words]);
 
     useEffect(() => {
-        setCanvas();
+        configureCanvas();
     }, [playing]);
 
-    const onStart = (e) => {
+    const onStart = (playInfo) => {
         setPlaying(true);
+        setPlayInfo(playInfo);
+        const startTime = new Date().getTime();
+        setInterval(() => {
+            const time = Math.floor((new Date().getTime() - startTime) / 1000);
+            const DHMS = convertSeconds2DHMS(time);
+            setTrackTime(`${DHMS.minutes} : ${DHMS.seconds}`);
+        }, 1000);
+    }
+
+    const handleEnd = () => {
+        if(!playInfo) {
+            setMessage('Something went wrong.');
+            return;
+        }
+        endPlay(playInfo._id, onEnd);
+    }
+
+    const onEnd = () => {
+        setPlaying(false);
+        setPlayInfo(null);
+        setShowModal(true);
     }
 
     return (
         <div className='main'>
             <CAlert />
+            <CongrateModal
+                show={showModal}
+                onHide={() => setShowModal(false)}
+                trackTime={trackTime}
+            />
             <canvas id="canvas"></canvas>
             <div className='text-center'>
                 {
-                    isConnected && isLoggedin ? (<Button variant="primary" className='btn-start' onClick={onStart}>START</Button>) : 
-                    <Button variant="primary" className='btn-start' disabled onClick={onStart}>START</Button>
+                    isConnected && isLoggedin ? (playing ? <div className='track-time'>{trackTime}</div> : <Button variant="primary" className='btn-start' onClick={() => startPlay(onStart)}>START</Button>) :
+                    (<Button variant="primary" className='btn-start' disabled>START</Button>)
                 }
             </div>
             

@@ -91,7 +91,7 @@ const CNavbar = () => {
     return (
         <Navbar bg="light" expand="lg">
         <Container>
-            <Navbar.Brand href="/">WORDYSEARCH</Navbar.Brand>
+            <Navbar.Brand href="/" className='fw-bold'>WORDYSEARCH</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="responsive-navbar-nav">
                 <Nav className="me-auto"></Nav>

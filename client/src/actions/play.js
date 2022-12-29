@@ -18,9 +18,17 @@ export const getWords = async (callback) => {
     }
 };
 
-export const startPlay = async () => {
+export const startPlay = async ( callback ) => {
     try {
-        
+        const res = await api.post('/play/start');
+        callback(res.data);
+    } catch (err) {
+        console.log(err.message);
+    }
+}
+export const endPlay = async ( playId, callback ) => {
+    try {
+        const res = await api.post('/play/end', {id: playId});
     } catch (err) {
         console.log(err.message);
     }

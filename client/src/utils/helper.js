@@ -48,7 +48,8 @@ export function getPosElement(el, mode = "default") {
 };
 
 
-export function drawLine(ctx, begin, end, stroke = 'black', width = 1) {
+export function drawLineOnCanvas(ctx, begin, end, stroke = 'black', width = 1) {
+    if(!ctx) return;
     if (stroke) {
         ctx.strokeStyle = stroke;
     }

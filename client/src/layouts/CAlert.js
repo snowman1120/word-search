@@ -13,7 +13,7 @@ const CAlert = () => {
     return (
         <Alert variant="danger" onClose={() => setShow(false)} dismissible show={show}>
             {/* <Alert.Heading>Oh snap!</Alert.Heading> */}
-            <p className="mb-0"> { message } </p>
+            <p className="mb-0 text-center"> { message } </p>
         </Alert>
     );
 }
