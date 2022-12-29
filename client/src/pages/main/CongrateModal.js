@@ -11,12 +11,12 @@ const CongrateModal = ( props ) => {
           <Modal.Body>
             <div className='success-modal'>
                 <div className="success-modal-mark">
-                    <img src='/assets/images/icons/success-green-check-mark-icon.png' alt='' />
+                    <img src='/assets/img/success-green-check-mark-icon.png' alt='' />
                 </div>
-                <p className='success-modal-message'>congratulations!</p>
-                <p className='success-modal-note'>
+                <h1 className='success-modal-message'>congratulations!</h1>
+                <h4 className='success-modal-note'>
                     {props.trackTime}
-                </p>
+                </h4>
             </div>
           </Modal.Body>
         </Modal>

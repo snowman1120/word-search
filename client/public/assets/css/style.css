@@ -64,4 +64,21 @@
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s;
+}
+
+.success-modal {
+  padding: 50px 20px;
+}
+.success-modal .success-modal-mark {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.success-modal .success-modal-mark img {
+  width: 30%;
+}
+.success-modal .success-modal-message {
+  text-align: center;
+}
+.success-modal .success-modal-note {
+  text-align: center;
 }/*# sourceMappingURL=style.css.map */

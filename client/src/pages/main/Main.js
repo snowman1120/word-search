@@ -12,7 +12,7 @@ import {drawLineOnCanvas, getPosElement, reverseString, convertSeconds2DHMS} fro
 import { startPlay, endPlay } from 'actions/play';
 
 const alphabets = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-const letters = [];
+let letters = [];
 
 const rowCount = 20;
 const colCount = 35;
@@ -97,7 +97,7 @@ const putWordsIntoLetters = (words) => {
 }
 
 const Main = () => {
-    const { isConnected, words, setWords, setMessage, isLoggedin } = useStateContext();
+    const { isConnected, words, setWords, setMessage, isLoggedin, playInfo, setPlayInfo } = useStateContext();
 
     let fromSpot = null;
     const setFromSpot = (spot) => fromSpot = spot;
@@ -110,15 +110,19 @@ const Main = () => {
     const [context, setContext] = useState(null);
     const [lineList, setLineList] = useState([]);
     const [playing, setPlaying] = useState(false);
-    const [playInfo, setPlayInfo] = useState(null);
     const [trackTime, setTrackTime] = useState('00 : 00');
+    const [timerId, setTimerId] = useState(null);
     const [showModal, setShowModal] = useState(false);
+
+    const onError = (error) => {
+        setMessage(error);
+    }
     
     function drawListLines() {
         if (context) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             // do your drawing stuff here
-            lineList.forEach(line => drawLineOnCanvas(context,
+            lineList.forEach(line => line.from.pos && line.to.pos && drawLineOnCanvas(context,
                 [line.from.pos.x, line.from.pos.y], [line.to.pos.x, line.to.pos.y], line.color, lineWidth));
         }
     }
@@ -274,13 +278,6 @@ const Main = () => {
     }
 
     useEffect(() => {
-        getWords(words => {
-            putWordsIntoLetters(words);
-            setWords(words);
-        });
-    }, []);
-
-    useEffect(() => {
         const canv = document.querySelector('#canvas');
         setCanvas(canv);
         if (canv && canv.getContext) {
@@ -288,26 +285,49 @@ const Main = () => {
             setContext(ctx);
         }
         resizeScreen();
-        window.addEventListener("keydown", preventSearchFunction);
-        window.addEventListener('resize', resizeScreen, false);
-        window.addEventListener('mousedown', handleMouseDown);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-    }, [words]);
+        
+        window.addEventListener("keydown", preventSearchFunction, true);
+        window.addEventListener('resize', resizeScreen, true);
+        window.addEventListener('mousedown', handleMouseDown, true);
+        window.addEventListener('mousemove', handleMouseMove, true);
+        window.addEventListener('mouseup', handleMouseUp, true);
+
+        return () => {
+            window.removeEventListener('keydown', preventSearchFunction, true);
+            window.removeEventListener('resize', resizeScreen, true);
+            window.removeEventListener('mousedown', handleMouseDown, true);
+            window.removeEventListener('mousemove', handleMouseMove, true);
+            window.removeEventListener('mouseup', handleMouseUp, true);
+        }
+    }, [words, playInfo, timerId]);
 
     useEffect(() => {
         configureCanvas();
     }, [playing]);
 
-    const onStart = (playInfo) => {
+    const onStart = (info) => {
+        getWords(onError, words => {
+            letters = [];
+            putRandomLetters();
+            putWordsIntoLetters(words);
+            setWords(words);
+        });
+        foundWords = [];
+        setFromSpot(null);
+        downPos = null;
+        setLineList([]);
+        setTrackTime('00 : 00');
+        $('.word').removeClass('opacity-0');
+
         setPlaying(true);
-        setPlayInfo(playInfo);
+        setPlayInfo(info);
         const startTime = new Date().getTime();
-        setInterval(() => {
+        const timerId = setInterval(() => {
             const time = Math.floor((new Date().getTime() - startTime) / 1000);
             const DHMS = convertSeconds2DHMS(time);
             setTrackTime(`${DHMS.minutes} : ${DHMS.seconds}`);
         }, 1000);
+        setTimerId(timerId);
     }
 
     const handleEnd = () => {
@@ -315,13 +335,19 @@ const Main = () => {
             setMessage('Something went wrong.');
             return;
         }
-        endPlay(playInfo._id, onEnd);
+        endPlay(onError, playInfo._id, onEnd);
+        clearInterval(timerId);
     }
 
-    const onEnd = () => {
+    const onEnd = (info) => {
         setPlaying(false);
         setPlayInfo(null);
         setShowModal(true);
+        setWords([]);
+
+        const time = Math.floor((new Date(info.end).getTime() - new Date(info.start).getTime()) / 1000);
+        const DHMS = convertSeconds2DHMS(time);
+        setTrackTime(`${DHMS.minutes} : ${DHMS.seconds}`);
     }
 
     return (
@@ -335,7 +361,7 @@ const Main = () => {
             <canvas id="canvas"></canvas>
             <div className='text-center'>
                 {
-                    isConnected && isLoggedin ? (playing ? <div className='track-time'>{trackTime}</div> : <Button variant="primary" className='btn-start' onClick={() => startPlay(onStart)}>START</Button>) :
+                    isConnected && isLoggedin ? (playing ? <div className='track-time'>{trackTime}</div> : <Button variant="primary" className='btn-start' onClick={() => startPlay(onError, onStart)}>START</Button>) :
                     (<Button variant="primary" className='btn-start' disabled>START</Button>)
                 }
             </div>

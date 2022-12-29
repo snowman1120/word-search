@@ -3,7 +3,7 @@ const router = express.Router();
 
 const Word = require('../../models/Word');
 
-WORD_COUNT = 2;
+WORD_COUNT = 20;
 
 router.post('/', async (req, res) => {
     try {

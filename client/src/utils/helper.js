@@ -8,6 +8,12 @@ export const convertRegularNumber10 = (number) => {
     return number;
 }
 
+export const convertRegularNumber100 = (number) => {
+    if(number < 10) return '00' + number;
+    if(number < 100) return '0' + number;
+    return number;
+}
+
 export const convertSeconds2DHMS = (time) => {
     let remainSeconds = time;
     let days = Math.floor(remainSeconds / 86400);

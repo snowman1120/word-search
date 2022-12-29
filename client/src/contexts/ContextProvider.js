@@ -10,6 +10,7 @@ export const ContextProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState({ });
   const [words, setWords] = useState([]);
   const [message, setMessage] = useState(null);
+  const [playInfo, setPlayInfo] = useState(null);
 
   //once we create the provider, we render out the children and pass the values we want to wrap our app with. 
   return (
@@ -24,7 +25,9 @@ export const ContextProvider = ({ children }) => {
         words,
         setWords,
         message,
-        setMessage
+        setMessage,
+        playInfo,
+        setPlayInfo
       }}
     >
       {children}

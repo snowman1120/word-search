@@ -2,16 +2,16 @@ import {Routes, Route} from 'react-router-dom';
 
 // Page Components
 import Main from 'pages/main/Main';
-import UserScores from 'pages/user-scores/UserScores';
+import LeaderBoard from 'pages/leader-board/LeaderBoard';
 
 const CRoutes = () => {
     return (
         <Routes>
-            {/* Main */}
-            <Route path='/' element={(<Main />)} />
+            {/* LeaderBoard */}
+            <Route path='/' element={(<LeaderBoard />)} />
 
-            {/* UserScores */}
-            <Route path='/scores' element={(<UserScores />)} />
+            {/* Main */}
+            <Route path='/play' element={(<Main />)} />
         </Routes>
     )
 }
